@@ -1,23 +1,21 @@
-use std::fmt;
-
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
 
 pub trait DisplayDriver {
     // fn new() -> Self;
-    fn draw_pixels(&self, data: [u8; WIDTH * HEIGHT]);
+    fn draw_pixels(&mut self, data: [bool; WIDTH * HEIGHT]);
 }
 
 #[derive(Debug)]
 pub struct Display<DisplayDriverT: DisplayDriver> {
-    screen: [u8; WIDTH * HEIGHT],
+    screen: [bool; WIDTH * HEIGHT],
     display_driver: DisplayDriverT,
 }
 
 impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
     pub fn new(display_driver: DisplayDriverT) -> Display<DisplayDriverT> {
-        let display = Display{
-            screen: [0; WIDTH * HEIGHT],
+        let mut display = Display{
+            screen: [false; WIDTH * HEIGHT],
             display_driver
         };
 

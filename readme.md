@@ -19,3 +19,7 @@ https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
 - The other instructions
 - A better debugger output
 - Abstracting key input
+- Timers
+- Sound
+- Collisions
+- Fonts

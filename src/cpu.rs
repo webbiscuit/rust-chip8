@@ -8,8 +8,7 @@ pub struct Cpu {
     // timer: u8,
     // sound: u8,
     program_counter: u16,
-    // stack_pointer: u8,
-    // stack: [u16; 16],
+    stack: Vec<u16>
 }
 
 impl Cpu {
@@ -18,6 +17,7 @@ impl Cpu {
             v_registers: [0; 16],
             i_register: 0,
             program_counter: memory_start,
+            stack: Vec::new()
         }
     }
 
@@ -50,6 +50,11 @@ impl Cpu {
                         println!("{:#06X} - Clears the screen.", opcode);
                         display.clear();
                     },
+                    0x00EE => {
+                        // 0x00EE: Pop PC off the stack.
+                        println!("{:#06X} - Pop PC off the stack.", opcode);
+                        self.program_counter = self.stack.pop().unwrap();
+                    },
                     _ => {
                         panic!("Unknown opcode: {:#06X}", opcode);
                     }
@@ -61,6 +66,15 @@ impl Cpu {
 
                 println!("{:#06X} - Jump to address {}", opcode, address);
 
+                self.program_counter = address;
+            },
+            0x2000 => {
+                // 0x2NNN: Call subroutine at address NNN.
+                let address = opcode & 0x0FFF;
+
+                println!("{:#06X} - Jump to subroutine {}", opcode, address);
+
+                self.stack.push(self.program_counter);
                 self.program_counter = address;
             },
             0x3000 => {
@@ -141,6 +155,19 @@ impl Cpu {
 
                         println!("{:#06X} XOR V{:X} to V{:X}.", opcode, vx, vy);
                         self.v_registers[vx as usize] = self.v_registers[vx as usize] ^ self.v_registers[vy as usize];
+                    },
+                    0x0004 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
+
+                        match self.v_registers[vx as usize].overflowing_add(self.v_registers[vy as usize]) {
+                            (val, overflow) => {
+                                self.v_registers[vx as usize] = val;
+                                self.v_registers[0xF] = overflow as u8;
+                            }
+                        } 
                     },
                     0x0005 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;

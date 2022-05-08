@@ -13,3 +13,9 @@ https://www.youtube.com/watch?v=cWRopgPRC4M
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
 https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
+
+### TODO
+
+- The other instructions
+- A better debugger output
+- Abstracting key input

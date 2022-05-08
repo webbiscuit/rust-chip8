@@ -62,11 +62,39 @@ impl Cpu {
                 println!("{:#06X} - Jump to address {}", opcode, address);
 
                 self.program_counter = address;
-            }
-            0xA000 => {
-                let address = (opcode & 0x0FFF) as u16;
-                println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
-                self.i_register = address;
+            },
+            0x3000 => {
+                // eq
+                let address = ((opcode & 0x0F00) >> 8) as u8;
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} - V{:X} eq {}", opcode, address, value);
+
+                if self.v_registers[address as usize] == value {
+                    self.program_counter += 2;
+                }
+            },
+            0x4000 => {
+                // neq
+                let address = ((opcode & 0x0F00) >> 8) as u8;
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} - V{:X} neq {}", opcode, address, value);
+
+                if self.v_registers[address as usize] != value {
+                    self.program_counter += 2;
+                }
+            },
+            0x5000 => {
+                // eq register
+                let address1 = ((opcode & 0x0F00) >> 8) as u8;
+                let address2 = ((opcode & 0x00F0) >> 4) as u8;
+
+                println!("{:#06X} - V{:X} eq V{:X}", opcode, address1, address2);
+
+                if self.v_registers[address1 as usize] == self.v_registers[address2 as usize] {
+                    self.program_counter += 2;
+                }
             },
             0x6000 => {
                 let ix = ((opcode & 0x0F00) >> 8) as usize;
@@ -74,6 +102,112 @@ impl Cpu {
 
                 println!("{:#06X} Set V{:X} to {:#04X}.", opcode, ix, value);
                 self.v_registers[ix] = value;
+            },
+            0x7000 => { 
+                let ix = ((opcode & 0x0F00) >> 8) as usize;
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} Add {:#04X} to V{:X}.", opcode, value, ix);
+
+                self.v_registers[ix] = self.v_registers[ix].saturating_add(value);
+            },
+            0x8000 => {
+                match opcode & 0x000F
+                {
+                    0x0000 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} Set V{:X} to V{:X}.", opcode, vx, vy);
+                        self.v_registers[vx as usize] = self.v_registers[vy as usize];
+                    },
+                    0x0001 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} OR V{:X} to V{:X}.", opcode, vx, vy);
+                        self.v_registers[vx as usize] = self.v_registers[vx as usize] | self.v_registers[vy as usize];
+                    },
+                    0x0002 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} AND V{:X} to V{:X}.", opcode, vx, vy);
+                        self.v_registers[vx as usize] = self.v_registers[vx as usize] & self.v_registers[vy as usize];
+                    },
+                    0x0003 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} XOR V{:X} to V{:X}.", opcode, vx, vy);
+                        self.v_registers[vx as usize] = self.v_registers[vx as usize] ^ self.v_registers[vy as usize];
+                    },
+                    0x0005 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
+
+                        match self.v_registers[vx as usize].overflowing_sub(self.v_registers[vy as usize]) {
+                            (val, overflow) => {
+                                self.v_registers[vx as usize] = val;
+                                self.v_registers[0xF] = !overflow as u8;
+                            }
+                        } 
+                    },
+                    0x0006 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let lost_bit = (self.v_registers[vx as usize] & 0x000F) as u8;
+
+                        println!("{:#06X} >>1 V{:X}.", opcode, vx);
+
+                        self.v_registers[vx as usize] = self.v_registers[vx as usize] >> 1;
+                        self.v_registers[0xF] = lost_bit;
+
+                    },
+                    0x0007 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let vy = ((opcode & 0x00F0) >> 4) as u8;
+
+                        println!("{:#06X} Sub VY (V{:X}) - VX (V{:X}).", opcode, vx, vy);
+
+                        match self.v_registers[vy as usize].overflowing_sub(self.v_registers[vx as usize]) {
+                            (val, overflow) => {
+                                self.v_registers[vy as usize] = val;
+                                self.v_registers[0xF] = !overflow as u8;
+                            }
+                        } 
+                    },
+                    0x000E => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let lost_bit = ((self.v_registers[vx as usize] as u16 & 0xF000) >> 12) as u8;
+
+                        println!("{:#06X} <<1 V{:X}.", opcode, vx);
+
+                        self.v_registers[vx as usize] = self.v_registers[vx as usize] << 1;
+                        self.v_registers[0xF] = lost_bit;
+
+                    },
+                    _ => {
+                        panic!("Unknown opcode: {:#06X}", opcode);
+                    }
+                }
+            },
+            0x9000 => {
+                // neq register
+                let address1 = ((opcode & 0x0F00) >> 8) as u8;
+                let address2 = ((opcode & 0x00F0) >> 4) as u8;
+
+                println!("{:#06X} - V{:X} eq V{:X}", opcode, address1, address2);
+
+                if self.v_registers[address1 as usize] != self.v_registers[address2 as usize] {
+                    self.program_counter += 2;
+                }
+            },
+            0xA000 => {
+                let address = (opcode & 0x0FFF) as u16;
+                println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
+                self.i_register = address;
             },
             0xD000 => {
                 let x = self.v_registers[((opcode & 0x0F00) >> 8) as usize];
@@ -91,14 +225,6 @@ impl Cpu {
 
                     display.set_pixels(x, y + (i as u8), pixels);
                 }
-            },
-            0x7000 => { 
-                let ix = ((opcode & 0x0F00) >> 8) as usize;
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} Add {:#04X} to V{:X}.", opcode, value, ix);
-
-                self.v_registers[ix] = self.v_registers[ix].saturating_add(value);
             },
             _ => {
                 panic!("Unknown opcode: {:#06X}", opcode);

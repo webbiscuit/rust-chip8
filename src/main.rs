@@ -17,7 +17,8 @@ mod cpu;
 fn main() {
     println!("Chip-8 By Dan!");
 
-    let mut file = File::open("roms/IBM Logo.ch8").unwrap();
+    // let mut file = File::open("roms/bc_test.ch8").unwrap();
+    let mut file = File::open("roms/test_opcode.ch8").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data);
 

@@ -20,8 +20,7 @@ impl Memory {
     }
 
     pub fn read_word(&self, address: u16) -> u16 {
-        let opcode = (self.data[address as usize] as u16) << 8 | self.data[address as usize + 1] as u16;
-        opcode
+        (self.data[address as usize] as u16) << 8 | self.data[address as usize + 1] as u16
     }
 
     pub fn read_byte(&self, address: u16) -> u8 {

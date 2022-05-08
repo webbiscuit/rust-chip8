@@ -15,13 +15,11 @@ pub struct Display<DisplayDriverT: DisplayDriver> {
 
 impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
     pub fn new(display_driver: DisplayDriverT) -> Display<DisplayDriverT> {
-        let display = Display{
+        Display{
             screen: [false; WIDTH * HEIGHT],
             display_driver,
             dirty: true
-        };
-        
-        display
+        }
     }
 
     pub fn clear(&mut self) {
@@ -41,7 +39,7 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
         for i in 0..8 {
             let pixel = pixels & (1 << (7 - i)) != 0;
             let collision = self.screen[ix + i] & pixel;
-            self.screen[ix + i] = self.screen[ix + i] ^ pixel;
+            self.screen[ix + i] ^= pixel;
         }
 
         self.dirty = true;

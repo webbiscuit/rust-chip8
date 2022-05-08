@@ -1,7 +1,5 @@
 use std::time::{Instant, Duration};
 use std::{fs::File, io::Read};
-use std::io;
-use std::io::prelude::*;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 

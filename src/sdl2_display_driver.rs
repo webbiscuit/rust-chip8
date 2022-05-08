@@ -54,7 +54,7 @@ impl DisplayDriver for Sdl2DisplayDriver {
 }
 
 fn to_colour(value: bool) -> pixels::Color {
-    if value == false {
+    if !value {
         pixels::Color::RGB(0, 0, 0)
     } else {
         pixels::Color::RGB(0, 255, 102)

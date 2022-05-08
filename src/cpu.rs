@@ -1,5 +1,3 @@
-use std::fmt;
-
 use crate::{memory::Memory, display::Display, display::DisplayDriver};
 
 pub struct Cpu {
@@ -140,21 +138,21 @@ impl Cpu {
                         let vy = ((opcode & 0x00F0) >> 4) as u8;
 
                         println!("{:#06X} OR V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] = self.v_registers[vx as usize] | self.v_registers[vy as usize];
+                        self.v_registers[vx as usize] |= self.v_registers[vy as usize];
                     },
                     0x0002 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
                         let vy = ((opcode & 0x00F0) >> 4) as u8;
 
                         println!("{:#06X} AND V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] = self.v_registers[vx as usize] & self.v_registers[vy as usize];
+                        self.v_registers[vx as usize] &= self.v_registers[vy as usize];
                     },
                     0x0003 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
                         let vy = ((opcode & 0x00F0) >> 4) as u8;
 
                         println!("{:#06X} XOR V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] = self.v_registers[vx as usize] ^ self.v_registers[vy as usize];
+                        self.v_registers[vx as usize] ^= self.v_registers[vy as usize];
                     },
                     0x0004 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
@@ -162,12 +160,10 @@ impl Cpu {
 
                         println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
 
-                        match self.v_registers[vx as usize].overflowing_add(self.v_registers[vy as usize]) {
-                            (val, overflow) => {
-                                self.v_registers[vx as usize] = val;
-                                self.v_registers[0xF] = overflow as u8;
-                            }
-                        } 
+                        let (val, overflow) = self.v_registers[vx as usize].overflowing_add(self.v_registers[vy as usize]);
+
+                        self.v_registers[vx as usize] = val;
+                        self.v_registers[0xF] = overflow as u8;
                     },
                     0x0005 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
@@ -175,12 +171,10 @@ impl Cpu {
 
                         println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
 
-                        match self.v_registers[vx as usize].overflowing_sub(self.v_registers[vy as usize]) {
-                            (val, overflow) => {
-                                self.v_registers[vx as usize] = val;
-                                self.v_registers[0xF] = !overflow as u8;
-                            }
-                        } 
+                        let (val, overflow) = self.v_registers[vx as usize].overflowing_sub(self.v_registers[vy as usize]);
+                        
+                        self.v_registers[vx as usize] = val;
+                        self.v_registers[0xF] = !overflow as u8;
                     },
                     0x0006 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
@@ -188,7 +182,7 @@ impl Cpu {
 
                         println!("{:#06X} >>1 V{:X}.", opcode, vx);
 
-                        self.v_registers[vx as usize] = self.v_registers[vx as usize] >> 1;
+                        self.v_registers[vx as usize] >>= 1;
                         self.v_registers[0xF] = lost_bit;
 
                     },
@@ -198,12 +192,9 @@ impl Cpu {
 
                         println!("{:#06X} Sub VY (V{:X}) - VX (V{:X}).", opcode, vx, vy);
 
-                        match self.v_registers[vy as usize].overflowing_sub(self.v_registers[vx as usize]) {
-                            (val, overflow) => {
-                                self.v_registers[vy as usize] = val;
-                                self.v_registers[0xF] = !overflow as u8;
-                            }
-                        } 
+                        let (val, overflow) = self.v_registers[vy as usize].overflowing_sub(self.v_registers[vx as usize]);
+                        self.v_registers[vy as usize] = val;
+                        self.v_registers[0xF] = !overflow as u8;
                     },
                     0x000E => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
@@ -211,7 +202,7 @@ impl Cpu {
 
                         println!("{:#06X} <<1 V{:X}.", opcode, vx);
 
-                        self.v_registers[vx as usize] = self.v_registers[vx as usize] << 1;
+                        self.v_registers[vx as usize] <<= 1;
                         self.v_registers[0xF] = lost_bit;
 
                     },

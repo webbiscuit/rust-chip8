@@ -1,3 +1,4 @@
+use std::time::{Instant, Duration};
 use std::{fs::File, io::Read};
 use std::io;
 use std::io::prelude::*;
@@ -31,6 +32,10 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut frame: u32 = 0;
 
+    let mut last_instruction_run_time = Instant::now();
+    let mut intruction_count = 0;
+    let Max_Instructions_Per_Second = 700;
+
 
     'running: loop {
         // get the inputs here
@@ -48,10 +53,23 @@ fn main() {
                 } => {
                     chip8.cycle();
                     chip8.show_internals();
+                    last_instruction_run_time = Instant::now();
                 },
                 _ => {}
             }
         }
+
+        // TODO: cap cpu speed
+        // let now = Instant::now();
+        // let sleep_dur = frame_duration
+        //     .checked_sub(now.saturating_duration_since(timestamp))
+        //     .unwrap_or(Duration::new(0, 0));
+        // ::std::thread::sleep(sleep_dur);
+        // timestamp = now;
         // chip8.cycle();
+
+        chip8.cycle();
+        chip8.show_internals();
+        last_instruction_run_time = Instant::now();
     }
 }

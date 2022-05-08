@@ -1,4 +1,4 @@
-use sdl2;
+use sdl2::{self, Sdl};
 use sdl2::pixels;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -15,12 +15,12 @@ pub struct Sdl2DisplayDriver {
 }
 
 impl Sdl2DisplayDriver {
-    pub fn new() -> Sdl2DisplayDriver {
-        let sdl_context = sdl2::init().unwrap();
+    pub fn new(sdl_context: &Sdl) -> Sdl2DisplayDriver {
+        // let sdl_context = sdl2::init().unwrap();
         let video_subsys = sdl_context.video().unwrap();
         let window = video_subsys
             .window(
-                "rust-sdl2_gfx: draw line & FPSManager",
+                "rust-chip8",
                 SCREEN_WIDTH,
                 SCREEN_HEIGHT,
             )
@@ -35,7 +35,7 @@ impl Sdl2DisplayDriver {
         canvas.clear();
         canvas.present();
 
-        Sdl2DisplayDriver { canvas: canvas }
+        Sdl2DisplayDriver { canvas }
     }
 }
 

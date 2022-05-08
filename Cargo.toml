@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 # rand = "0.3.15"
+# minifb = "0.23.0"
 
 [dependencies.sdl2]
 version = "0.35.2"

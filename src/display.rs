@@ -10,18 +10,45 @@ pub trait DisplayDriver {
 pub struct Display<DisplayDriverT: DisplayDriver> {
     screen: [bool; WIDTH * HEIGHT],
     display_driver: DisplayDriverT,
+    dirty: bool
 }
 
 impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
     pub fn new(display_driver: DisplayDriverT) -> Display<DisplayDriverT> {
         let mut display = Display{
             screen: [false; WIDTH * HEIGHT],
-            display_driver
+            display_driver,
+            dirty: true
         };
 
-        display.display_driver.draw_pixels(display.screen);
+        display.screen[1] = true;
+        // display.screen[65] = true;
+        // display.display_driver.draw_pixels(display.screen);
 
         display
+    }
+
+    pub fn clear(&mut self) {
+        self.screen = [false; WIDTH * HEIGHT];
+        self.dirty = true;
+    }
+
+    pub fn draw_if_dirty(&mut self) {
+        if self.dirty {
+            self.display_driver.draw_pixels(self.screen);
+            self.dirty = false;
+        }
+    }
+
+    pub fn set_pixels(&mut self, x: u8, y: u8, pixels: u8) {
+        let ix = (x as usize) + (y as usize * WIDTH);
+        for i in 0..8 {
+            let pixel = pixels & (1 << i) != 0;
+            let collision = self.screen[ix + i] & pixel;
+            self.screen[ix + i] = self.screen[ix + i] ^ pixel;
+        }
+
+        self.dirty = true;
     }
 }
 

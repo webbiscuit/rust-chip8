@@ -4,7 +4,7 @@ use crate::{memory::Memory, display::Display, display::DisplayDriver};
 
 pub struct Cpu {
     v_registers: [u8; 16],
-    i_register: u8,
+    i_register: u16,
     // timer: u8,
     // sound: u8,
     program_counter: u16,
@@ -21,7 +21,7 @@ impl Cpu {
         }
     }
 
-    pub fn i_register(&self) -> u8 {
+    pub fn i_register(&self) -> u16 {
         self.i_register
     }
 
@@ -38,7 +38,7 @@ impl Cpu {
         let opcode = memory.read_word(self.program_counter);
         self.program_counter += 2;
 
-        println!("{:04x}", opcode);
+        // println!("{:04x}", opcode);
 
         match opcode & 0xF000
         {
@@ -47,50 +47,61 @@ impl Cpu {
                 {
                     0x00E0 => {
                         // 0x00E0: Clears the screen.
-                        println!("Clears the screen.");
+                        println!("{:#06X} - Clears the screen.", opcode);
                         display.clear();
                     },
                     _ => {
-                        panic!("Unknown opcode: {:04x}", opcode);
+                        panic!("Unknown opcode: {:#06X}", opcode);
                     }
                 }
             },
             0x1000 => {
                 // 0x1NNN: Jumps to address NNN.
                 let address = opcode & 0x0FFF;
+
+                println!("{:#06X} - Jump to address {}", opcode, address);
+
                 self.program_counter = address;
             }
             0xA000 => {
-                println!("Set the I Reg.");
-                self.i_register = (opcode & 0x0FFF) as u8;
+                let address = (opcode & 0x0FFF) as u16;
+                println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
+                self.i_register = address;
             },
             0x6000 => {
-                println!("Set Vx to NN.");
                 let ix = ((opcode & 0x0F00) >> 8) as usize;
-                self.v_registers[ix] = (opcode & 0x00FF) as u8;
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} Set V{:X} to {:#04X}.", opcode, ix, value);
+                self.v_registers[ix] = value;
             },
             0xD000 => {
-                println!("TODO: Drwa the stuff.");
                 let x = self.v_registers[((opcode & 0x0F00) >> 8) as usize];
                 let y = self.v_registers[((opcode & 0x00F0) >> 4) as usize];
-                let n = (opcode & 0x000F) as u8;
+                let n = (opcode & 0x000F) as u16;
+                println!("{:#06X} - Draw sprite at ({}, {}) with {} bytes.", opcode, x, y, n);
+
+                self.v_registers[0xF] = 0;
 
                 for i in 0..n {
-                    let pixel_location = memory.read_byte(self.i_register + i);
+                    let pixel_location = self.i_register + i;
                     let pixels = memory.read_byte(pixel_location);
-                    println!("{:02x}", pixel_location);
-                    println!("{:02x}", pixels);
-                    display.set_pixels(x, y + i, pixels);
+                    println!("Address: {:02x}", pixel_location);
+                    println!("Pixel: {:02x}", pixels);
+
+                    display.set_pixels(x, y + (i as u8), pixels);
                 }
             },
             0x7000 => { 
-                println!("Add NN to Vx.");
                 let ix = ((opcode & 0x0F00) >> 8) as usize;
-                let nn = (opcode & 0x00FF) as u8;
-                self.v_registers[ix] = self.v_registers[ix].saturating_add(nn);
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} Add {:#04X} to V{:X}.", opcode, value, ix);
+
+                self.v_registers[ix] = self.v_registers[ix].saturating_add(value);
             },
             _ => {
-                panic!("Unknown opcode: {:04x}", opcode);
+                panic!("Unknown opcode: {:#06X}", opcode);
             }
         }
 

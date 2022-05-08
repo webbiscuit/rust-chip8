@@ -19,13 +19,13 @@ impl Memory {
         self.data[address as usize..(address as usize + data.len())].copy_from_slice(data);
     }
 
-    pub fn read_word(&self, program_counter: u16) -> u16 {
-        let opcode = (self.data[program_counter as usize] as u16) << 8 | self.data[program_counter as usize + 1] as u16;
+    pub fn read_word(&self, address: u16) -> u16 {
+        let opcode = (self.data[address as usize] as u16) << 8 | self.data[address as usize + 1] as u16;
         opcode
     }
 
-    pub fn read_byte(&self, i: u8) -> u8 {
-        self.data[i as usize]
+    pub fn read_byte(&self, address: u16) -> u8 {
+        self.data[address as usize]
     }
 }
 

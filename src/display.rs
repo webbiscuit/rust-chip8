@@ -21,7 +21,7 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
             dirty: true
         };
 
-        display.screen[1] = true;
+        // display.screen[1] = true;
         // display.screen[65] = true;
         // display.display_driver.draw_pixels(display.screen);
 
@@ -43,7 +43,7 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
     pub fn set_pixels(&mut self, x: u8, y: u8, pixels: u8) {
         let ix = (x as usize) + (y as usize * WIDTH);
         for i in 0..8 {
-            let pixel = pixels & (1 << i) != 0;
+            let pixel = pixels & (1 << (7 - i)) != 0;
             let collision = self.screen[ix + i] & pixel;
             self.screen[ix + i] = self.screen[ix + i] ^ pixel;
         }

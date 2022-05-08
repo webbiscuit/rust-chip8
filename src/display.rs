@@ -15,16 +15,12 @@ pub struct Display<DisplayDriverT: DisplayDriver> {
 
 impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
     pub fn new(display_driver: DisplayDriverT) -> Display<DisplayDriverT> {
-        let mut display = Display{
+        let display = Display{
             screen: [false; WIDTH * HEIGHT],
             display_driver,
             dirty: true
         };
-
-        // display.screen[1] = true;
-        // display.screen[65] = true;
-        // display.display_driver.draw_pixels(display.screen);
-
+        
         display
     }
 

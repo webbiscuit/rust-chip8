@@ -253,6 +253,8 @@ impl Cpu {
 
                 self.v_registers[0xF] = 0;
 
+                display.begin_draw();
+
                 for i in 0..n {
                     let pixel_location = self.i_register + i;
                     let pixels = memory.read_byte(pixel_location);
@@ -260,6 +262,10 @@ impl Cpu {
                     println!("Pixel: {:02x}", pixels);
 
                     display.set_pixels(x, y.saturating_add(i as u8), pixels);
+                }
+
+                if display.did_collide() {
+                    self.v_registers[0xF] = 1;
                 }
             },
             0xE000 => {

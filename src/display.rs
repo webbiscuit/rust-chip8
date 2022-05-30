@@ -46,12 +46,16 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
             let pixel = pixels & (1 << (7 - i)) != 0;
             
             if (ix + i) < WIDTH * HEIGHT {
-                self.collision = self.screen[ix + i] & pixel;
+                self.collision |= self.screen[ix + i] & pixel;
                 self.screen[ix + i] ^= pixel;
             }
         }
 
         self.dirty = true;
+    }
+
+    pub fn begin_draw(&mut self) {
+        self.collision = false;
     }
 }
 

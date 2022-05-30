@@ -49,6 +49,10 @@ impl Chip8 {
     pub fn is_running(&self) -> bool {
         true
     }
+
+    pub fn timer_cycle(&mut self) {
+        self.cpu.timer_cycle();
+    }
 }
 
 impl fmt::Debug for Chip8 {

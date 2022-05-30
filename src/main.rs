@@ -66,7 +66,7 @@ fn main() {
         chip8.show_internals();
 
         if let Some(_fps) = loop_helper.report_rate() {
-            println!("PING!");
+            chip8.timer_cycle();
         }
 
         loop_helper.loop_sleep(); 

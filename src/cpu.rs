@@ -287,6 +287,11 @@ impl Cpu {
         // execute
     }
 
+    pub fn timer_cycle(&mut self) {
+        self.delay_timer = self.delay_timer.saturating_sub(1);
+        self.sound_timer = self.sound_timer.saturating_sub(1);
+    }
+
 
 }
 

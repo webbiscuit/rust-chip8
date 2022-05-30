@@ -75,6 +75,14 @@ impl Chip8 {
     pub fn timer_cycle(&mut self) {
         self.cpu.timer_cycle();
     }
+
+    pub fn key_pressed(&mut self, key: u8) {
+        self.cpu.key_pressed(key);
+    }
+
+    pub fn key_up(&mut self) {
+        self.cpu.key_up();
+    }
 }
 
 impl fmt::Debug for Chip8 {

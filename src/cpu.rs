@@ -9,7 +9,8 @@ pub struct Cpu {
     sound_timer: u8,
     program_counter: u16,
     stack: Vec<u16>,
-    rng: rand::rngs::ThreadRng,
+    rng: rand::rngs::ThreadRng, // Doesn't belong in cpu?
+    key_pressed: Option<u8> // Doesn't belong in cpu
 }
 
 impl Cpu {
@@ -22,6 +23,7 @@ impl Cpu {
             program_counter: memory_start,
             stack: Vec::new(),
             rng: rand::thread_rng(),
+            key_pressed: None
         }
     }
 
@@ -222,7 +224,7 @@ impl Cpu {
                 let address1 = ((opcode & 0x0F00) >> 8) as u8;
                 let address2 = ((opcode & 0x00F0) >> 4) as u8;
 
-                println!("{:#06X} - V{:X} eq V{:X}", opcode, address1, address2);
+                println!("{:#06X} - V{:X} neq V{:X}", opcode, address1, address2);
 
                 if self.v_registers[address1 as usize] != self.v_registers[address2 as usize] {
                     self.program_counter += 2;
@@ -258,6 +260,39 @@ impl Cpu {
                     println!("Pixel: {:02x}", pixels);
 
                     display.set_pixels(x, y + (i as u8), pixels);
+                }
+            },
+            0xE000 => {
+                match opcode & 0x00FF
+                {
+                    0x009E => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        println!("{:#06X} - Skip next instruction if key with value V{:X} is pressed.", opcode, vx);
+
+                        if let Some(key_pressed) = self.key_pressed {
+                            if key_pressed == self.v_registers[vx as usize] {
+                                self.program_counter += 2;
+                            }
+                        }                    
+                    },
+                    0x00A1 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        println!("{:#06X} - Skip next instruction if key with value V{:X} is not pressed.", opcode, vx);
+
+                        if self.key_pressed == None {
+                            self.program_counter += 2;
+                        }
+                        else if let Some(key_pressed) = self.key_pressed {
+                            if key_pressed != self.v_registers[vx as usize] {
+                                self.program_counter += 2;
+                            }
+                        }                    
+                    },
+                    _ => {
+                        panic!("Unknown opcode: {:#06X}", opcode);
+                    }
                 }
             },
             0xF000 => {
@@ -297,6 +332,19 @@ impl Cpu {
 
                         if self.i_register > 0xFFF {
                             self.v_registers[0xF] = 1;
+                        }
+                    },
+                    0x000A => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Wait for key press, store key in V{:X}, {}.", opcode, vx, value);
+
+                        if self.key_pressed == None {
+                            self.program_counter -= 2;
+                        }
+                        else if let Some(key_pressed) = self.key_pressed {
+                            self.v_registers[vx as usize] = key_pressed;
                         }
                     },
                     0x0029 => {
@@ -363,6 +411,14 @@ impl Cpu {
     pub fn timer_cycle(&mut self) {
         self.delay_timer = self.delay_timer.saturating_sub(1);
         self.sound_timer = self.sound_timer.saturating_sub(1);
+    }
+
+    pub fn key_pressed(&mut self, key: u8) {
+        self.key_pressed = Some(key);
+    }
+
+    pub(crate) fn key_up(&mut self) {
+        self.key_pressed = None;
     }
 
 

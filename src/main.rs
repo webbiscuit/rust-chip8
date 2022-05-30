@@ -1,3 +1,4 @@
+use std::env;
 use std::{fs::File, io::Read};
 use sdl2::event::Event;
 use sdl2::keyboard::{Keycode, Scancode};
@@ -15,7 +16,14 @@ mod cpu;
 fn main() {
     println!("Chip-8 By Dan!");
 
-    let mut file = File::open("roms/VERS").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let mut rom = "roms/test_opcode.ch8";
+
+    if args.len() > 1 {
+        rom = &args[1];
+    }
+
+    let mut file = File::open(rom).unwrap();
     // let mut file = File::open("roms/bc_test.ch8").unwrap();
     // let mut file = File::open("roms/test_opcode.ch8").unwrap();
     let mut data = Vec::<u8>::new();

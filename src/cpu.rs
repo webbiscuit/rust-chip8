@@ -259,7 +259,7 @@ impl Cpu {
                     println!("Address: {:02x}", pixel_location);
                     println!("Pixel: {:02x}", pixels);
 
-                    display.set_pixels(x, y + (i as u8), pixels);
+                    display.set_pixels(x, y.saturating_add(i as u8), pixels);
                 }
             },
             0xE000 => {

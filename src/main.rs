@@ -93,16 +93,16 @@ fn main() {
 fn handle_keydown(scancode: Option<Scancode>, chip8: &mut Chip8) {
     match scancode {
         Some(Scancode::Num1) => {
-            chip8.key_pressed(0x00);
-        },
-        Some(Scancode::Num2) => {
             chip8.key_pressed(0x01);
         },
-        Some(Scancode::Num3) => {
+        Some(Scancode::Num2) => {
             chip8.key_pressed(0x02);
         },
-        Some(Scancode::Num4) => {
+        Some(Scancode::Num3) => {
             chip8.key_pressed(0x03);
+        },
+        Some(Scancode::Num4) => {
+            chip8.key_pressed(0x0C);
         },
         Some(Scancode::Q) => {
             chip8.key_pressed(0x04);
@@ -114,28 +114,28 @@ fn handle_keydown(scancode: Option<Scancode>, chip8: &mut Chip8) {
             chip8.key_pressed(0x06);
         },
         Some(Scancode::R) => {
-            chip8.key_pressed(0x07);
-        },
-        Some(Scancode::A) => {
-            chip8.key_pressed(0x08);
-        },
-        Some(Scancode::S) => {
-            chip8.key_pressed(0x09);
-        },
-        Some(Scancode::D) => {
-            chip8.key_pressed(0x0A);
-        },
-        Some(Scancode::F) => {
-            chip8.key_pressed(0x0B);
-        },
-        Some(Scancode::Z) => {
-            chip8.key_pressed(0x0C);
-        },
-        Some(Scancode::X) => {
             chip8.key_pressed(0x0D);
         },
-        Some(Scancode::C) => {
+        Some(Scancode::A) => {
+            chip8.key_pressed(0x07);
+        },
+        Some(Scancode::S) => {
+            chip8.key_pressed(0x08);
+        },
+        Some(Scancode::D) => {
+            chip8.key_pressed(0x09);
+        },
+        Some(Scancode::F) => {
             chip8.key_pressed(0x0E);
+        },
+        Some(Scancode::Z) => {
+            chip8.key_pressed(0x0A);
+        },
+        Some(Scancode::X) => {
+            chip8.key_pressed(0x00);
+        },
+        Some(Scancode::C) => {
+            chip8.key_pressed(0x0B);
         },
         Some(Scancode::V) => {
             chip8.key_pressed(0x0F);

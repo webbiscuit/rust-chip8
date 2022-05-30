@@ -235,6 +235,11 @@ impl Cpu {
                 println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
                 self.i_register = address;
             },
+            0xB000 => {
+                let address = (opcode & 0x0FFF) as u16;
+                println!("{:#06X} - Jump with offset {:#04X}.", opcode, address);
+                self.program_counter = self.v_registers[0] as u16 + address;
+            },
             0xC000 => {
                 let vx = ((opcode & 0x0F00) >> 8) as u8;
                 let random_byte = self.rng.gen::<u8>();

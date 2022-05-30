@@ -186,7 +186,7 @@ impl Cpu {
                     },
                     0x0006 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let lost_bit = (self.v_registers[vx as usize] & 0x0001) as u8;
+                        let lost_bit = self.v_registers[vx as usize] & 0x01;
 
                         println!("{:#06X} >>1 V{:X}.", opcode, vx);
 
@@ -206,7 +206,7 @@ impl Cpu {
                     },
                     0x000E => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let lost_bit = ((self.v_registers[vx as usize] as u16 & 0x1000) >> 12) as u8;
+                        let lost_bit = (self.v_registers[vx as usize] >> 7) & 0x1;
 
                         println!("{:#06X} <<1 V{:X}.", opcode, vx);
 

@@ -1,4 +1,4 @@
-use crate::{memory::Memory, display::Display, display::DisplayDriver};
+use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8};
 
 pub struct Cpu {
     v_registers: [u8; 16],
@@ -6,7 +6,7 @@ pub struct Cpu {
     delay_timer: u8,
     sound_timer: u8,
     program_counter: u16,
-    stack: Vec<u16>
+    stack: Vec<u16>,
 }
 
 impl Cpu {
@@ -272,6 +272,26 @@ impl Cpu {
 
                         println!("{:#06X} - Set ST to value in V{:X}, {}.", opcode, vx, value);
                         self.sound_timer = value;
+                    },
+                    0x001E => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Set I to I + V{:X}, {}.", opcode, vx, value);
+                        self.i_register += value as u16;
+
+                        if self.i_register > 0xFFF {
+                            self.v_registers[0xF] = 1;
+                        }
+                    },
+                    0x0029 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Set I to the location of the sprite for the character in V{:X}, {}.", opcode, vx, value);
+                        self.i_register = chip8::FONT_START + (value as u16 * 5);
                     },
                     0x0033 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;

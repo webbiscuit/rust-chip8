@@ -16,8 +16,9 @@ mod cpu;
 fn main() {
     println!("Chip-8 By Dan!");
 
+    let mut file = File::open("roms/15PUZZLE").unwrap();
     // let mut file = File::open("roms/bc_test.ch8").unwrap();
-    let mut file = File::open("roms/test_opcode.ch8").unwrap();
+    // let mut file = File::open("roms/test_opcode.ch8").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data);
 
@@ -25,6 +26,7 @@ fn main() {
 
     let sdl_context = sdl2::init().unwrap();
     let mut chip8 = Chip8::new(&sdl_context);
+    chip8.load_default_font();
     chip8.load_rom(&data);
 
     // print!("{:?}", chip8);

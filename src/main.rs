@@ -17,7 +17,7 @@ fn main() {
     println!("Chip-8 By Dan!");
 
     let args: Vec<String> = env::args().collect();
-    let mut rom = "roms/test_opcode.ch8";
+    let mut rom = "roms/SCTEST";
 
     if args.len() > 1 {
         rom = &args[1];

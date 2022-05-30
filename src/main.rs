@@ -16,7 +16,7 @@ mod cpu;
 fn main() {
     println!("Chip-8 By Dan!");
 
-    let mut file = File::open("roms/15PUZZLE").unwrap();
+    let mut file = File::open("roms/MAZE").unwrap();
     // let mut file = File::open("roms/bc_test.ch8").unwrap();
     // let mut file = File::open("roms/test_opcode.ch8").unwrap();
     let mut data = Vec::<u8>::new();

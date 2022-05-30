@@ -23,4 +23,4 @@ https://crates.io/crates/spin_sleep
 - Abstracting key input
 - Sound
 - Collisions
-- Fonts
+- Key pressing

@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8};
 
 pub struct Cpu {
@@ -7,6 +9,7 @@ pub struct Cpu {
     sound_timer: u8,
     program_counter: u16,
     stack: Vec<u16>,
+    rng: rand::rngs::ThreadRng,
 }
 
 impl Cpu {
@@ -17,7 +20,8 @@ impl Cpu {
             delay_timer: 0,
             sound_timer: 0,
             program_counter: memory_start,
-            stack: Vec::new()
+            stack: Vec::new(),
+            rng: rand::thread_rng(),
         }
     }
 
@@ -228,6 +232,16 @@ impl Cpu {
                 let address = (opcode & 0x0FFF) as u16;
                 println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
                 self.i_register = address;
+            },
+            0xC000 => {
+                let vx = ((opcode & 0x0F00) >> 8) as u8;
+                let random_byte = self.rng.gen::<u8>();
+
+                let value = (opcode & 0x00FF) as u8;
+
+                println!("{:#06X} - Set V{:X} to a random byte and AND it with {:X}.", opcode, vx, value);
+
+                self.v_registers[vx as usize] = random_byte & value;
             },
             0xD000 => {
                 let x = self.v_registers[((opcode & 0x0F00) >> 8) as usize];

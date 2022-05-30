@@ -7,8 +7,7 @@ edition = "2021"
 
 [dependencies]
 spin_sleep = "1.1.1"
-# rand = "0.3.15"
-# minifb = "0.23.0"
+rand = "0.8.5"
 
 [dependencies.sdl2]
 version = "0.35.2"

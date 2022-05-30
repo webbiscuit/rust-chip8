@@ -3,8 +3,8 @@ use crate::{memory::Memory, display::Display, display::DisplayDriver};
 pub struct Cpu {
     v_registers: [u8; 16],
     i_register: u16,
-    // timer: u8,
-    // sound: u8,
+    delay_timer: u8,
+    sound_timer: u8,
     program_counter: u16,
     stack: Vec<u16>
 }
@@ -14,6 +14,8 @@ impl Cpu {
         Cpu {
             v_registers: [0; 16],
             i_register: 0,
+            delay_timer: 0,
+            sound_timer: 0,
             program_counter: memory_start,
             stack: Vec::new()
         }
@@ -244,6 +246,38 @@ impl Cpu {
                     display.set_pixels(x, y + (i as u8), pixels);
                 }
             },
+            0xF000 => {
+                match opcode & 0x00FF
+                {
+                    0x0007 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let delay_timer = self.delay_timer;
+
+                        println!("{:#06X} - Set V{:X} to DT {}.", opcode, vx, delay_timer);
+                        self.v_registers[vx as usize] = delay_timer;
+                    },
+                    0x0015 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Set DT to value in V{:X}, {}.", opcode, vx, value);
+                        self.delay_timer = value;
+                    },
+                    0x0018 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Set ST to value in V{:X}, {}.", opcode, vx, value);
+                        self.sound_timer = value;
+                    },
+                    _ => {
+                        panic!("Unknown opcode: {:#06X}", opcode);
+                    }
+                }
+            },
             _ => {
                 panic!("Unknown opcode: {:#06X}", opcode);
             }
@@ -252,10 +286,6 @@ impl Cpu {
         // decode
         // execute
     }
-
-    // pub(crate) fn cycle2(&self, memory: &mut Memory, display: &mut Display<crate::sdl2_display_driver::Sdl2DisplayDriver>) -> _ {
-    //     todo!()
-    // }
 
 
 }

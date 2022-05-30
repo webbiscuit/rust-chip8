@@ -2,6 +2,7 @@ use std::time::{Instant, Duration};
 use std::{fs::File, io::Read};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use spin_sleep::LoopHelper;
 
 use chip8::Chip8;
 
@@ -29,14 +30,17 @@ fn main() {
     // print!("{:?}", chip8);
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut frame: u32 = 0;
+    const MAX_INSTRUCTIONS_PER_SECOND: i32 = 700;
+    const TIMER_FREQUENCY_PER_SECOND: f64 = 60.0;
 
-    let mut last_instruction_run_time = Instant::now();
-    let mut intruction_count = 0;
-    let Max_Instructions_Per_Second = 700;
+    let mut loop_helper = LoopHelper::builder()
+        .report_interval_s(1.0 / TIMER_FREQUENCY_PER_SECOND)
+        .build_with_target_rate(MAX_INSTRUCTIONS_PER_SECOND);
 
 
     'running: loop {
+        loop_helper.loop_start();
+
         // get the inputs here
         for event in event_pump.poll_iter() {
             // print!("{:?}", event);
@@ -46,29 +50,25 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Space),
-                    ..
-                } => {
-                    chip8.cycle();
-                    chip8.show_internals();
-                    last_instruction_run_time = Instant::now();
-                },
+                // Event::KeyDown {
+                //     keycode: Some(Keycode::Space),
+                //     ..
+                // } => {
+                //     chip8.cycle();
+                //     chip8.show_internals();
+                //     last_instruction_run_time = Instant::now();
+                // },
                 _ => {}
             }
         }
 
-        // TODO: cap cpu speed
-        // let now = Instant::now();
-        // let sleep_dur = frame_duration
-        //     .checked_sub(now.saturating_duration_since(timestamp))
-        //     .unwrap_or(Duration::new(0, 0));
-        // ::std::thread::sleep(sleep_dur);
-        // timestamp = now;
-        // chip8.cycle();
-
         chip8.cycle();
         chip8.show_internals();
-        last_instruction_run_time = Instant::now();
+
+        if let Some(_fps) = loop_helper.report_rate() {
+            println!("PING!");
+        }
+
+        loop_helper.loop_sleep(); 
     }
 }

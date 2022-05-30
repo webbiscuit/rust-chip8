@@ -129,7 +129,7 @@ impl Cpu {
 
                 println!("{:#06X} Add {:#04X} to V{:X}.", opcode, value, ix);
 
-                self.v_registers[ix] = self.v_registers[ix].saturating_add(value);
+                self.v_registers[ix] = self.v_registers[ix].wrapping_add(value);
             },
             0x8000 => {
                 match opcode & 0x000F
@@ -342,9 +342,8 @@ impl Cpu {
                     },
                     0x000A => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let value = self.v_registers[vx as usize];
 
-                        println!("{:#06X} - Wait for key press, store key in V{:X}, {}.", opcode, vx, value);
+                        println!("{:#06X} - Wait for key press, store key in V{:X}.", opcode, vx);
 
                         if self.key_pressed == None {
                             self.program_counter -= 2;

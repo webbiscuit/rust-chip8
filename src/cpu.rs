@@ -273,6 +273,30 @@ impl Cpu {
                         println!("{:#06X} - Set ST to value in V{:X}, {}.", opcode, vx, value);
                         self.sound_timer = value;
                     },
+                    0x0055 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let index = self.i_register;
+
+                        println!("{:#06X} - Store to V0-V{:X} memory, starting {:X}", opcode, vx, index);
+
+                        for i in 0..(vx + 1) {
+                            let value = self.v_registers[i as usize];
+                            memory.write_byte(index + i as u16, value);
+                        }
+                    },
+                    0x0065 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+
+                        let index = self.i_register;
+
+                        println!("{:#06X} - Read from V0-V{:X} memory, starting {:X}", opcode, vx, index);
+
+                        for i in 0..(vx + 1) {
+                            let byte = memory.read_byte(index + i as u16);
+                            self.v_registers[i as usize] = byte;
+                        }
+                    },
                     _ => {
                         panic!("Unknown opcode: {:#06X}", opcode);
                     }

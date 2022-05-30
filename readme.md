@@ -21,7 +21,6 @@ https://crates.io/crates/spin_sleep
 - The other instructions
 - A better debugger output
 - Abstracting key input
-- Timers
 - Sound
 - Collisions
 - Fonts

@@ -273,6 +273,21 @@ impl Cpu {
                         println!("{:#06X} - Set ST to value in V{:X}, {}.", opcode, vx, value);
                         self.sound_timer = value;
                     },
+                    0x0033 => {
+                        let vx = ((opcode & 0x0F00) >> 8) as u8;
+                        let value = self.v_registers[vx as usize];
+
+                        println!("{:#06X} - Store BCD representation of V{:X} in memory at I.", opcode, vx);
+
+                        let hundreds = (value / 100) as u8;
+                        let tens = ((value % 100) / 10) as u8;
+                        let ones = (value % 10) as u8;
+
+                        memory.write_byte(self.i_register, hundreds);
+                        memory.write_byte(self.i_register + 1, tens);
+                        memory.write_byte(self.i_register + 2, ones);
+
+                    },
                     0x0055 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
 

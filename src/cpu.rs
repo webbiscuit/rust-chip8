@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8};
+use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8, keyboard::Keyboard};
 
 pub struct Cpu {
     v_registers: [u8; 16],
@@ -10,7 +10,6 @@ pub struct Cpu {
     program_counter: u16,
     stack: Vec<u16>,
     rng: rand::rngs::ThreadRng, // Doesn't belong in cpu?
-    key_pressed: Option<u8> // Doesn't belong in cpu
 }
 
 impl Cpu {
@@ -23,7 +22,6 @@ impl Cpu {
             program_counter: memory_start,
             stack: Vec::new(),
             rng: rand::thread_rng(),
-            key_pressed: None
         }
     }
 
@@ -39,7 +37,7 @@ impl Cpu {
         self.program_counter
     }
 
-    pub fn cycle<T: DisplayDriver>(&mut self, memory: &mut Memory, display: &mut Display<T>) {
+    pub fn cycle<T: DisplayDriver>(&mut self, memory: &mut Memory, display: &mut Display<T>, keyboard: &Keyboard) {
         // fetch
         let opcode = memory.read_word(self.program_counter);
         self.program_counter += 2;
@@ -281,25 +279,18 @@ impl Cpu {
 
                         println!("{:#06X} - Skip next instruction if key with value V{:X} is pressed.", opcode, vx);
 
-                        if let Some(key_pressed) = self.key_pressed {
-                            if key_pressed == self.v_registers[vx as usize] {
-                                self.program_counter += 2;
-                            }
-                        }                    
+                        if keyboard.is_key_pressed(self.v_registers[vx as usize]) {
+                            self.program_counter += 2;
+                        }                  
                     },
                     0x00A1 => {
                         let vx = ((opcode & 0x0F00) >> 8) as u8;
 
                         println!("{:#06X} - Skip next instruction if key with value V{:X} is not pressed.", opcode, vx);
 
-                        if self.key_pressed == None {
+                        if !keyboard.is_key_pressed(self.v_registers[vx as usize]) {
                             self.program_counter += 2;
-                        }
-                        else if let Some(key_pressed) = self.key_pressed {
-                            if key_pressed != self.v_registers[vx as usize] {
-                                self.program_counter += 2;
-                            }
-                        }                    
+                        }                     
                     },
                     _ => {
                         panic!("Unknown opcode: {:#06X}", opcode);
@@ -350,11 +341,11 @@ impl Cpu {
 
                         println!("{:#06X} - Wait for key press, store key in V{:X}.", opcode, vx);
 
-                        if self.key_pressed == None {
+                        if !keyboard.has_signal_keypress() {
                             self.program_counter -= 2;
                         }
-                        else if let Some(key_pressed) = self.key_pressed {
-                            self.v_registers[vx as usize] = key_pressed;
+                        else {
+                            self.v_registers[vx as usize] = keyboard.key_last_pressed().unwrap();
                         }
                     },
                     0x0029 => {
@@ -422,16 +413,6 @@ impl Cpu {
         self.delay_timer = self.delay_timer.saturating_sub(1);
         self.sound_timer = self.sound_timer.saturating_sub(1);
     }
-
-    pub fn key_pressed(&mut self, key: u8) {
-        self.key_pressed = Some(key);
-    }
-
-    pub(crate) fn key_up(&mut self) {
-        self.key_pressed = None;
-    }
-
-
 }
 
 // impl fmt::Debug for Memory {

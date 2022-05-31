@@ -18,9 +18,6 @@ https://crates.io/crates/spin_sleep
 
 ### TODO
 
-- The other instructions
+- Refactor instructions
 - A better debugger output
-- Abstracting key input
 - Sound
-- Collisions
-- Key pressing

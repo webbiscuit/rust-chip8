@@ -6,6 +6,7 @@ use crate::memory::Memory;
 use crate::display::Display;
 use crate::sdl2_display_driver::Sdl2DisplayDriver;
 use crate::cpu::Cpu;
+use crate::keyboard::Keyboard;
 
 pub const PROGRAM_START: u16 = 0x200;
 pub const FONT_START: u16 = 0x050;
@@ -14,6 +15,7 @@ pub struct Chip8 {
     memory: Memory,
     cpu: Cpu,
     display: Display<Sdl2DisplayDriver>,
+    keyboard: Keyboard,
 }
 
 impl Chip8 {
@@ -22,6 +24,7 @@ impl Chip8 {
             memory: Memory::new(),
             cpu: Cpu::new(PROGRAM_START),
             display: Display::new(Sdl2DisplayDriver::new(sdl_context)),
+            keyboard: Keyboard::new(),
         }
     }
 
@@ -50,8 +53,12 @@ impl Chip8 {
         self.memory.write_bytes(PROGRAM_START, data);
     }
 
+    pub fn precycle(&mut self) {
+        self.keyboard.clear_signals();
+    }
+
     pub fn cycle(&mut self) {
-        self.cpu.cycle(&mut self.memory, &mut self.display);
+        self.cpu.cycle(&mut self.memory, &mut self.display, &self.keyboard);
         self.display.draw_if_dirty();
     }
 
@@ -76,13 +83,15 @@ impl Chip8 {
         self.cpu.timer_cycle();
     }
 
-    pub fn key_pressed(&mut self, key: u8) {
-        self.cpu.key_pressed(key);
+    pub fn key_down(&mut self, key: u8) {
+        self.keyboard.key_down(key);
     }
 
     pub fn key_up(&mut self) {
-        self.cpu.key_up();
+        self.keyboard.key_up();
     }
+
+    
 }
 
 impl fmt::Debug for Chip8 {

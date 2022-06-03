@@ -71,12 +71,6 @@ impl Chip8 {
         for i in 0..16 {
             println!("  V{:1X}: 0x{:02x}", i, self.cpu.v_registers()[i]);
         }
-        // println!("{:?}", self);
-
-    }
-
-    pub fn is_running(&self) -> bool {
-        true
     }
 
     pub fn timer_cycle(&mut self) {

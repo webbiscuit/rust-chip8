@@ -2,7 +2,6 @@ pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
 
 pub trait DisplayDriver {
-    // fn new() -> Self;
     fn draw_pixels(&mut self, data: [bool; WIDTH * HEIGHT]);
 }
 
@@ -58,9 +57,3 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
         self.collision = false;
     }
 }
-
-// impl fmt::Debug for Display<DisplayDriverT> {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "{{ screen: {:?} }}", self.screen)
-//     }
-// }

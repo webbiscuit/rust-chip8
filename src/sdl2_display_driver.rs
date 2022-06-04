@@ -41,6 +41,8 @@ impl Sdl2DisplayDriver {
 
 impl DisplayDriver for Sdl2DisplayDriver {
     fn draw_pixels(&mut self, pixels: [bool; WIDTH * HEIGHT]) {
+        self.canvas.clear();
+        
         for (i, pixel_on) in pixels.iter().enumerate() {
             let x = i % WIDTH * SCALE_FACTOR as usize;
             let y = i / WIDTH * SCALE_FACTOR as usize;

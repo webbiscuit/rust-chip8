@@ -73,6 +73,10 @@ impl Chip8 {
         }
     }
 
+    pub fn cpu(&self) -> &Cpu {
+        &self.cpu
+    }
+
     pub fn timer_cycle(&mut self) {
         self.cpu.timer_cycle();
     }

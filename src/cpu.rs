@@ -14,6 +14,7 @@ pub struct Cpu {
     program_counter: Address,
     stack: Vec<Address>,
     rng: rand::rngs::ThreadRng,
+    cycle_count: u64,
 }
 
 impl Cpu {
@@ -26,6 +27,7 @@ impl Cpu {
             program_counter: memory_start,
             stack: Vec::new(),
             rng: rand::thread_rng(),
+            cycle_count: 0,
         }
     }
 
@@ -140,8 +142,6 @@ impl Cpu {
                 for i in 0..pixel_height as u16 {
                     let pixel_location = self.i_register + i;
                     let pixels = memory.read_byte(pixel_location);
-                    println!("Address: {:02x}", pixel_location);
-                    println!("Pixel: {:02x}", pixels);
 
                     display.set_pixels(x, y.saturating_add(i as u8), pixels, y);
                 }
@@ -222,11 +222,17 @@ impl Cpu {
                 }
             },
         }
+
+        self.cycle_count += 1;
     }
 
     pub fn timer_cycle(&mut self) {
         self.delay_timer = self.delay_timer.saturating_sub(1);
         self.sound_timer = self.sound_timer.saturating_sub(1);
+    }
+
+    pub fn cycle_count(&self) -> u64 {
+        self.cycle_count
     }
 }
 

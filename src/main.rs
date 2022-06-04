@@ -4,7 +4,12 @@ use sdl2::event::Event;
 use sdl2::keyboard::{Keycode, Scancode};
 use spin_sleep::LoopHelper;
 
+use tui::Terminal;
+use tui::backend::CrosstermBackend;
+use std::io::stdout;
+
 use chip8::Chip8;
+
 
 mod chip8;
 mod memory;
@@ -13,9 +18,10 @@ mod sdl2_display_driver;
 mod cpu;
 mod keyboard;
 mod instructions;
+mod debugger_ui;
 
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Chip-8 By Dan!");
 
     let args: Vec<String> = env::args().collect();
@@ -25,9 +31,14 @@ fn main() {
         rom = &args[1];
     }
 
+    let stdout = stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
+
     let mut file = File::open(rom).unwrap();
     let mut data = Vec::<u8>::new();
-    file.read_to_end(&mut data);
+    file.read_to_end(&mut data)?;
 
     let sdl_context = sdl2::init().unwrap();
     let mut chip8 = Chip8::new(&sdl_context);
@@ -74,7 +85,9 @@ fn main() {
         }
 
         chip8.cycle();
-        chip8.show_internals();
+        terminal.draw(|rect| debugger_ui::draw(rect, chip8.cpu()))?;
+
+        // chip8.show_internals();
 
         if let Some(_fps) = loop_helper.report_rate() {
             chip8.timer_cycle();
@@ -82,6 +95,12 @@ fn main() {
 
         loop_helper.loop_sleep(); 
     }
+
+    // Restore the terminal and close application
+    terminal.clear()?;
+    terminal.show_cursor()?;
+
+    Ok(())
 }
 
 fn handle_keydown(scancode: Option<Scancode>, chip8: &mut Chip8) {

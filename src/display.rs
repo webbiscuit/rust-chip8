@@ -39,14 +39,25 @@ impl<DisplayDriverT: DisplayDriver> Display<DisplayDriverT> {
         self.collision
     }
 
-    pub fn set_pixels(&mut self, x: u8, y: u8, pixels: u8) {
-        let ix = (x as usize) + (y as usize * WIDTH);
+    pub fn set_pixels(&mut self, x: u8, y: u8, pixels: u8, start_y: u8) {
+        let clip_y = (((start_y as usize / HEIGHT) + 1) * HEIGHT) as u16;
+
+        if (y as u16) >= clip_y {
+            return;
+        }
+        
+        let ix = (x as usize % WIDTH) + ((y as usize % HEIGHT) * WIDTH);
         for i in 0..8 {
             let pixel = pixels & (1 << (7 - i)) != 0;
+
+            // Screen width
+            let clip_x = WIDTH + ((y as usize % HEIGHT) * WIDTH);
+
+            let pixel_pos = ix + i;
             
-            if (ix + i) < WIDTH * HEIGHT {
-                self.collision |= self.screen[ix + i] & pixel;
-                self.screen[ix + i] ^= pixel;
+            if pixel_pos < clip_x {
+                self.collision |= self.screen[pixel_pos] & pixel;
+                self.screen[pixel_pos] ^= pixel;
             }
         }
 

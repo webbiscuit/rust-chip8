@@ -2,18 +2,22 @@ use rand::Rng;
 
 use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8, keyboard::Keyboard, instructions::Instruction};
 
+pub type Address = u16;
+pub type Register = u8;
+pub type Value = u8;
+
 pub struct Cpu {
-    v_registers: [u8; 16],
-    i_register: u16,
-    delay_timer: u8,
-    sound_timer: u8,
-    program_counter: u16,
-    stack: Vec<u16>,
+    v_registers: [Register; 16],
+    i_register: Address,
+    delay_timer: Value,
+    sound_timer: Value,
+    program_counter: Address,
+    stack: Vec<Address>,
     rng: rand::rngs::ThreadRng,
 }
 
 impl Cpu {
-    pub fn new(memory_start: u16) -> Cpu {
+    pub fn new(memory_start: Address) -> Cpu {
         Cpu {
             v_registers: [0; 16],
             i_register: 0,
@@ -25,15 +29,15 @@ impl Cpu {
         }
     }
 
-    pub fn i_register(&self) -> u16 {
+    pub fn i_register(&self) -> Address {
         self.i_register
     }
 
-    pub fn v_registers(&self) -> &[u8; 16] {
+    pub fn v_registers(&self) -> &[Value; 16] {
         &self.v_registers
     }
 
-    pub fn program_counter(&self) -> u16 {
+    pub fn program_counter(&self) -> Address {
         self.program_counter
     }
 

@@ -1,6 +1,4 @@
-type Address = u16;
-type Register = u8;
-type Value = u8;
+use crate::cpu::{Address, Register, Value};
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {

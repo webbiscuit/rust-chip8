@@ -12,13 +12,14 @@ mod display;
 mod sdl2_display_driver;
 mod cpu;
 mod keyboard;
+mod instructions;
 
 
 fn main() {
     println!("Chip-8 By Dan!");
 
     let args: Vec<String> = env::args().collect();
-    let mut rom = "roms/CONNECT4";
+    let mut rom = "roms/bc_test.ch8";
 
     if args.len() > 1 {
         rom = &args[1];

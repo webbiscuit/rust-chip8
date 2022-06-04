@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8, keyboard::Keyboard};
+use crate::{memory::Memory, display::Display, display::DisplayDriver, chip8, keyboard::Keyboard, instructions::Instruction};
 
 pub struct Cpu {
     v_registers: [u8; 16],
@@ -9,7 +9,7 @@ pub struct Cpu {
     sound_timer: u8,
     program_counter: u16,
     stack: Vec<u16>,
-    rng: rand::rngs::ThreadRng, // Doesn't belong in cpu?
+    rng: rand::rngs::ThreadRng,
 }
 
 impl Cpu {
@@ -42,223 +42,98 @@ impl Cpu {
         let opcode = memory.read_word(self.program_counter);
         self.program_counter += 2;
 
-        // println!("{:04x}", opcode);
+        // decode
+        // Option here to decode entire program upfront? (although some programs may self modify)
+        let instruction = Instruction::decode(opcode);
 
-        match opcode & 0xF000
-        {
-            0x0000 => {
-                match opcode
-                {
-                    0x00E0 => {
-                        // 0x00E0: Clears the screen.
-                        println!("{:#06X} - Clears the screen.", opcode);
-                        display.clear();
-                    },
-                    0x00EE => {
-                        // 0x00EE: Pop PC off the stack.
-                        println!("{:#06X} - Pop PC off the stack.", opcode);
-                        self.program_counter = self.stack.pop().unwrap();
-                    },
-                    _ => {
-                        panic!("Unknown opcode: {:#06X}", opcode);
-                    }
-                }
+        // execute
+        match instruction {
+            Instruction::ClearScreen => {
+                display.clear();
             },
-            0x1000 => {
-                // 0x1NNN: Jumps to address NNN.
-                let address = opcode & 0x0FFF;
-
-                println!("{:#06X} - Jump to address {}", opcode, address);
-
+            Instruction::Jump(address) => {
                 self.program_counter = address;
             },
-            0x2000 => {
-                // 0x2NNN: Call subroutine at address NNN.
-                let address = opcode & 0x0FFF;
-
-                println!("{:#06X} - Jump to subroutine {}", opcode, address);
-
+            Instruction::Return => {
+                self.program_counter = self.stack.pop().unwrap();
+            },
+            Instruction::Call(address) => {
                 self.stack.push(self.program_counter);
                 self.program_counter = address;
             },
-            0x3000 => {
-                // eq
-                let address = ((opcode & 0x0F00) >> 8) as u8;
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} - V{:X} eq {}", opcode, address, value);
-
-                if self.v_registers[address as usize] == value {
+            Instruction::CheckEqualValue(vx, value) => {
+                if self.v_registers[vx as usize] == value {
                     self.program_counter += 2;
                 }
             },
-            0x4000 => {
-                // neq
-                let address = ((opcode & 0x0F00) >> 8) as u8;
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} - V{:X} neq {}", opcode, address, value);
-
-                if self.v_registers[address as usize] != value {
+            Instruction::CheckNotEqualValue(vx, value) => {
+                if self.v_registers[vx as usize] != value {
                     self.program_counter += 2;
                 }
             },
-            0x5000 => {
-                // eq register
-                let address1 = ((opcode & 0x0F00) >> 8) as u8;
-                let address2 = ((opcode & 0x00F0) >> 4) as u8;
-
-                println!("{:#06X} - V{:X} eq V{:X}", opcode, address1, address2);
-
-                if self.v_registers[address1 as usize] == self.v_registers[address2 as usize] {
+            Instruction::CheckEqual(vx, vy) => {
+                if self.v_registers[vx as usize] == self.v_registers[vy as usize] {
                     self.program_counter += 2;
                 }
             },
-            0x6000 => {
-                let ix = ((opcode & 0x0F00) >> 8) as usize;
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} Set V{:X} to {:#04X}.", opcode, ix, value);
-                self.v_registers[ix] = value;
-            },
-            0x7000 => { 
-                let ix = ((opcode & 0x0F00) >> 8) as usize;
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} Add {:#04X} to V{:X}.", opcode, value, ix);
-
-                self.v_registers[ix] = self.v_registers[ix].wrapping_add(value);
-            },
-            0x8000 => {
-                match opcode & 0x000F
-                {
-                    0x0000 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} Set V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] = self.v_registers[vy as usize];
-                    },
-                    0x0001 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} OR V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] |= self.v_registers[vy as usize];
-                    },
-                    0x0002 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} AND V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] &= self.v_registers[vy as usize];
-                    },
-                    0x0003 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} XOR V{:X} to V{:X}.", opcode, vx, vy);
-                        self.v_registers[vx as usize] ^= self.v_registers[vy as usize];
-                    },
-                    0x0004 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
-
-                        let (val, overflow) = self.v_registers[vx as usize].overflowing_add(self.v_registers[vy as usize]);
-
-                        self.v_registers[vx as usize] = val;
-                        self.v_registers[0xF] = overflow as u8;
-                    },
-                    0x0005 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} Sub VX (V{:X}) - VY (V{:X}).", opcode, vx, vy);
-
-                        let (val, overflow) = self.v_registers[vx as usize].overflowing_sub(self.v_registers[vy as usize]);
-                        
-                        self.v_registers[vx as usize] = val;
-                        self.v_registers[0xF] = !overflow as u8;
-                    },
-                    0x0006 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let lost_bit = self.v_registers[vx as usize] & 0x01;
-
-                        println!("{:#06X} >>1 V{:X}.", opcode, vx);
-
-                        self.v_registers[vx as usize] >>= 1;
-                        self.v_registers[0xF] = lost_bit;
-
-                    },
-                    0x0007 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-                        println!("{:#06X} Sub VY (V{:X}) - VX (V{:X}).", opcode, vx, vy);
-
-                        let (val, overflow) = self.v_registers[vy as usize].overflowing_sub(self.v_registers[vx as usize]);
-                        self.v_registers[vx as usize] = val;
-                        self.v_registers[0xF] = !overflow as u8;
-                    },
-                    0x000E => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let lost_bit = (self.v_registers[vx as usize] >> 7) & 0x1;
-
-                        println!("{:#06X} <<1 V{:X}.", opcode, vx);
-
-                        self.v_registers[vx as usize] <<= 1;
-                        self.v_registers[0xF] = lost_bit;
-
-                    },
-                    _ => {
-                        panic!("Unknown opcode: {:#06X}", opcode);
-                    }
-                }
-            },
-            0x9000 => {
-                // neq register
-                let address1 = ((opcode & 0x0F00) >> 8) as u8;
-                let address2 = ((opcode & 0x00F0) >> 4) as u8;
-
-                println!("{:#06X} - V{:X} neq V{:X}", opcode, address1, address2);
-
-                if self.v_registers[address1 as usize] != self.v_registers[address2 as usize] {
+            Instruction::CheckNotEqual(vx, vy) => {
+                if self.v_registers[vx as usize] != self.v_registers[vy as usize] {
                     self.program_counter += 2;
                 }
             },
-            0xA000 => {
-                let address = (opcode & 0x0FFF) as u16;
-                println!("{:#06X} - Set the I Reg {:#04X}.", opcode, address);
-                self.i_register = address;
+            Instruction::SetRegisterToValue(register, value) => {
+                self.v_registers[register as usize] = value;
             },
-            0xB000 => {
-                let address = (opcode & 0x0FFF) as u16;
-                println!("{:#06X} - Jump with offset {:#04X}.", opcode, address);
-                self.program_counter = self.v_registers[0] as u16 + address;
+            Instruction::AddValueToRegister(register, value) => {
+                self.v_registers[register as usize] = self.v_registers[register as usize].wrapping_add(value);
             },
-            0xC000 => {
-                let vx = ((opcode & 0x0F00) >> 8) as u8;
-                let random_byte = self.rng.gen::<u8>();
-
-                let value = (opcode & 0x00FF) as u8;
-
-                println!("{:#06X} - Set V{:X} to a random byte and AND it with {:X}.", opcode, vx, value);
-
-                self.v_registers[vx as usize] = random_byte & value;
+            Instruction::SetRegister(vx, vy) => {
+                self.v_registers[vx as usize] = self.v_registers[vy as usize];
             },
-            0xD000 => {
-                let x = self.v_registers[((opcode & 0x0F00) >> 8) as usize];
-                let y = self.v_registers[((opcode & 0x00F0) >> 4) as usize];
-                let n = (opcode & 0x000F) as u16;
-                println!("{:#06X} - Draw sprite at ({}, {}) with {} bytes.", opcode, x, y, n);
+            Instruction::Or(vx, vy) => {
+                self.v_registers[vx as usize] |= self.v_registers[vy as usize];
+            },
+            Instruction::And(vx, vy) => {
+                self.v_registers[vx as usize] &= self.v_registers[vy as usize];
+            },
+            Instruction::Xor(vx, vy) => {
+                self.v_registers[vx as usize] ^= self.v_registers[vy as usize];
+            },
+            Instruction::Add(vx, vy) => {
+                let (val, overflow) = self.v_registers[vx as usize].overflowing_add(self.v_registers[vy as usize]);
 
+                self.v_registers[vx as usize] = val;
+                self.v_registers[0xF] = overflow as u8;
+            },
+            Instruction::Subtract{ destination, first, second} => {
+                let (val, overflow) = self.v_registers[first as usize].overflowing_sub(self.v_registers[second as usize]);
+
+                self.v_registers[destination as usize] = val;
+                self.v_registers[0xF] = !overflow as u8;
+            },
+            Instruction::ShiftLeft(vx) => {
+                let lost_bit = (self.v_registers[vx as usize] >> 7) & 0x1;
+
+                self.v_registers[vx as usize] <<= 1;
+                self.v_registers[0xF] = lost_bit;
+            },
+            Instruction::ShiftRight(vx) => {
+                let lost_bit = self.v_registers[vx as usize] & 0x01;
+        
+                self.v_registers[vx as usize] >>= 1;
+                self.v_registers[0xF] = lost_bit;
+            },
+            Instruction::SetIndex(index) => {
+                self.i_register = index;
+            },
+            Instruction::Display { vx, vy, pixel_height } => {
+                let x = self.v_registers[vx as usize];
+                let y = self.v_registers[vy as usize];
                 self.v_registers[0xF] = 0;
 
                 display.begin_draw();
 
-                for i in 0..n {
+                for i in 0..pixel_height as u16 {
                     let pixel_location = self.i_register + i;
                     let pixels = memory.read_byte(pixel_location);
                     println!("Address: {:02x}", pixel_location);
@@ -271,142 +146,78 @@ impl Cpu {
                     self.v_registers[0xF] = 1;
                 }
             },
-            0xE000 => {
-                match opcode & 0x00FF
-                {
-                    0x009E => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        println!("{:#06X} - Skip next instruction if key with value V{:X} is pressed.", opcode, vx);
-
-                        if keyboard.is_key_pressed(self.v_registers[vx as usize]) {
-                            self.program_counter += 2;
-                        }                  
-                    },
-                    0x00A1 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        println!("{:#06X} - Skip next instruction if key with value V{:X} is not pressed.", opcode, vx);
-
-                        if !keyboard.is_key_pressed(self.v_registers[vx as usize]) {
-                            self.program_counter += 2;
-                        }                     
-                    },
-                    _ => {
-                        panic!("Unknown opcode: {:#06X}", opcode);
-                    }
+            Instruction::Random(vx, value) => {
+                let random_byte = self.rng.gen::<u8>();
+                self.v_registers[vx as usize] = random_byte & value;
+            },
+            Instruction::SkipIfKeyPressed(x) => {
+                if keyboard.is_key_pressed(self.v_registers[x as usize]) {
+                    self.program_counter += 2;
                 }
             },
-            0xF000 => {
-                match opcode & 0x00FF
-                {
-                    0x0007 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let delay_timer = self.delay_timer;
-
-                        println!("{:#06X} - Set V{:X} to DT {}.", opcode, vx, delay_timer);
-                        self.v_registers[vx as usize] = delay_timer;
-                    },
-                    0x0015 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let value = self.v_registers[vx as usize];
-
-                        println!("{:#06X} - Set DT to value in V{:X}, {}.", opcode, vx, value);
-                        self.delay_timer = value;
-                    },
-                    0x0018 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let value = self.v_registers[vx as usize];
-
-                        println!("{:#06X} - Set ST to value in V{:X}, {}.", opcode, vx, value);
-                        self.sound_timer = value;
-                    },
-                    0x001E => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let value = self.v_registers[vx as usize];
-
-                        println!("{:#06X} - Set I to I + V{:X}, {}.", opcode, vx, value);
-                        self.i_register += value as u16;
-
-                        if self.i_register > 0xFFF {
-                            self.v_registers[0xF] = 1;
-                        }
-                    },
-                    0x000A => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        println!("{:#06X} - Wait for key press, store key in V{:X}.", opcode, vx);
-
-                        if !keyboard.has_signal_keypress() {
-                            self.program_counter -= 2;
-                        }
-                        else {
-                            self.v_registers[vx as usize] = keyboard.key_last_pressed().unwrap();
-                        }
-                    },
-                    0x0029 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let value = self.v_registers[vx as usize];
-
-                        println!("{:#06X} - Set I to the location of the sprite for the character in V{:X}, {}.", opcode, vx, value);
-                        self.i_register = chip8::FONT_START + (value as u16 * 5);
-                    },
-                    0x0033 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-                        let value = self.v_registers[vx as usize];
-
-                        println!("{:#06X} - Store BCD representation of V{:X} in memory at I.", opcode, vx);
-
-                        let hundreds = (value / 100) as u8;
-                        let tens = ((value % 100) / 10) as u8;
-                        let ones = (value % 10) as u8;
-
-                        memory.write_byte(self.i_register, hundreds);
-                        memory.write_byte(self.i_register + 1, tens);
-                        memory.write_byte(self.i_register + 2, ones);
-
-                    },
-                    0x0055 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let index = self.i_register;
-
-                        println!("{:#06X} - Store to V0-V{:X} memory, starting {:X}", opcode, vx, index);
-
-                        for i in 0..(vx + 1) {
-                            let value = self.v_registers[i as usize];
-                            memory.write_byte(index + i as u16, value);
-                        }
-                    },
-                    0x0065 => {
-                        let vx = ((opcode & 0x0F00) >> 8) as u8;
-
-                        let index = self.i_register;
-
-                        println!("{:#06X} - Read from V0-V{:X} memory, starting {:X}", opcode, vx, index);
-
-                        for i in 0..(vx + 1) {
-                            let byte = memory.read_byte(index + i as u16);
-                            self.v_registers[i as usize] = byte;
-                        }
-                    },
-                    _ => {
-                        panic!("Unknown opcode: {:#06X}", opcode);
-                    }
+            Instruction::SkipIfKeyNotPressed(x) => {
+                if !keyboard.is_key_pressed(self.v_registers[x as usize]) {
+                    self.program_counter += 2;
                 }
             },
-            _ => {
-                panic!("Unknown opcode: {:#06X}", opcode);
-            }
+            Instruction::ReadDelayTimer(x) => {
+                self.v_registers[x as usize] = self.delay_timer;
+            },
+            Instruction::WriteDelayTimer(vx) => {
+                self.delay_timer = self.v_registers[vx as usize];
+            },
+            Instruction::WriteSoundTimer(vx) => {
+                self.sound_timer = self.v_registers[vx as usize]; 
+            },
+            Instruction::AddRegisterToIndex(vx) => {
+                let value = self.v_registers[vx as usize];
+                self.i_register += value as u16;
+
+                // Not clear if this is supposed to wrap or carry on here
+                if self.i_register > 0xFFF {
+                    self.v_registers[0xF] = 1;
+                }
+            },
+            Instruction::WaitForKeyPress(vx) => {
+                if !keyboard.has_signal_keypress() {
+                    self.program_counter -= 2;
+                }
+                else {
+                    self.v_registers[vx as usize] = keyboard.key_last_pressed().unwrap();
+                }
+            },
+            Instruction::SetIndexToSprite(vx) => {
+                let value = self.v_registers[vx as usize];
+                self.i_register = chip8::FONT_START + (value as u16 * 5);
+            },
+            Instruction::StoreBCD(vx) => {
+                let value = self.v_registers[vx as usize];
+                    
+                let hundreds = (value / 100) as u8;
+                let tens = ((value % 100) / 10) as u8;
+                let ones = (value % 10) as u8;
+
+                memory.write_byte(self.i_register, hundreds);
+                memory.write_byte(self.i_register + 1, tens);
+                memory.write_byte(self.i_register + 2, ones);
+            },
+            Instruction::StoreRegisters(vx) => {
+                let index = self.i_register;
+
+                for i in 0..=vx {
+                    let value = self.v_registers[i as usize];
+                    memory.write_byte(index + i as u16, value);
+                }
+            },
+            Instruction::LoadRegisters(vx) => {
+                let index = self.i_register;
+
+                for i in 0..=vx {
+                    let value = memory.read_byte(index + i as u16);
+                    self.v_registers[i as usize] = value;
+                }
+            },
         }
-
-        // decode
-        // execute
     }
 
     pub fn timer_cycle(&mut self) {

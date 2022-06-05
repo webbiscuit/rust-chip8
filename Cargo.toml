@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 spin_sleep = "1.1.1"
 rand = "0.8.5"
-tui = { version = "0.14", default-features = false, features = ['crossterm'] }
-crossterm = { version = "0.19" }
+tui = { version = "0.18", default-features = false, features = ['crossterm'] }
+crossterm = { version = "0.23.2" }
 
 [dependencies.sdl2]
 version = "0.35.2"

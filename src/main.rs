@@ -1,5 +1,6 @@
 use std::env;
 use std::{fs::File, io::Read};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use sdl2::event::Event;
 use sdl2::keyboard::{Keycode, Scancode};
 use spin_sleep::LoopHelper;
@@ -30,6 +31,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.len() > 1 {
         rom = &args[1];
     }
+
+    enable_raw_mode()?;
 
     let stdout = stdout();
     let backend = CrosstermBackend::new(stdout);
@@ -87,8 +90,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         chip8.cycle();
         terminal.draw(|rect| debugger_ui::draw(rect, chip8.cpu()))?;
 
-        // chip8.show_internals();
-
         if let Some(_fps) = loop_helper.report_rate() {
             chip8.timer_cycle();
         }
@@ -99,6 +100,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Restore the terminal and close application
     terminal.clear()?;
     terminal.show_cursor()?;
+    disable_raw_mode()?;
+
 
     Ok(())
 }

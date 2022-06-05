@@ -64,39 +64,15 @@ fn draw_cpu(cpu: &Cpu) -> List {
     //     Style::default().fg(Color::Yellow),
     // )));
 
-    // items.push(Spans::from(Span::styled(
-    //     format!("{:04X}", 0x1234),
-    //     Style::default().fg(Color::Yellow),
-    // )));
-
-    // items.push(Spans::from(Span::styled(
-    //     format!("{:04X}", cpu.i),
-    //     Style::default().fg(Color::Yellow),
-    // )));
-
-    // items.push(Spans::from(Span::styled(
-    //     format!("{:04X}", cpu.sp),
-    //     Style::default().fg(Color::Yellow),
-    // )));
-
-    // items.push(Spans::from(Span::styled(
-    //     format!("{:04X}", cpu.delay_timer),
-    //     Style::default().fg(Color::Yellow),
-    // )));
-
-    // items.push(Spans::from(Span::styled(
-    //     format!("{:04X}", cpu.sound_timer),
-    //     Style::default().fg(Color::Yellow),
-    // )));
-
     List::new(items)
         .block(
             Block::default()
                 .title("CPU")
                 .borders(Borders::ALL),
         )
-        .highlight_symbol(">")
-        .highlight_style(Style::default().fg(Color::Yellow))
+        // .highlight_symbol(">")
+        // .highlight_style(Style::default().fg(Color::Yellow))
+        
         // .highlight_style(Style::default().modifier(StyleModifier::BOLD))
         // .highlight_symbol_style(Style::default().fg(Color::Yellow))
         // .highlight_symbol_style(Style::default().modifier(StyleModifier::BOLD))

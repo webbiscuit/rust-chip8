@@ -183,11 +183,10 @@ impl Cpu {
                 }
             },
             Instruction::WaitForKeyPress(vx) => {
-                if !keyboard.has_signal_keypress() {
-                    self.program_counter -= 2;
-                }
-                else {
+                if keyboard.has_signal_keypress() {
                     self.v_registers[vx as usize] = keyboard.key_last_pressed().unwrap();
+                } else {
+                    self.program_counter -= 2;
                 }
             },
             Instruction::SetIndexToSprite(vx) => {

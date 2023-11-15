@@ -22,3 +22,10 @@ Octo - https://github.com/JohnEarnest/Octo/tree/gh-pages/docs
 
 - A better debugger output
 - Sound
+
+# Maybe Guis
+https://github.com/fltk-rs/fltk-rs#tutorials
+
+https://github.com/rust-native-ui/libui-rs
+
+https://github.com/iced-rs/iced
